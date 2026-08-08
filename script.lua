@@ -1,15 +1,14 @@
--- +1 Speed Keyboard Escape Script - Mansoori Hub
+-- Keyboard Escape Pro Script - Mansoori Hub
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- تحميل واجهة Rayfield الفخمة
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "حمدان المنصوري | Keyboard Escape Pro 👑",
-   LoadingTitle = "جاري تحميل ماب الكيبورد والحلويات...",
+   Name = "حمدان المنصوري | Keyboard Escape 👑",
+   LoadingTitle = "ماب الكيبورد والسرعة",
    LoadingSubtitle = "by Mansoori",
    Theme = "Default",
    ConfigurationSaving = { Enabled = false },
@@ -17,13 +16,13 @@ local Window = Rayfield:CreateWindow({
    KeySystem = false
 })
 
-local Tab = Window:CreateTab("السرعة والهروب ⚡", 4483362458)
+local Tab = Window:CreateTab("التحكم بالسرعة ⚡", 4483362458)
 
 local SpeedEnabled = false
 local CustomSpeedValue = 1000
 
 Tab:CreateToggle({
-   Name = "تفعيل زيادة السرعة الخارقة (Auto Speed)",
+   Name = "تفعيل السرعة الخارقة (Auto Speed)",
    CurrentValue = false,
    Flag = "SpeedToggle",
    Callback = function(Value)
@@ -33,8 +32,8 @@ Tab:CreateToggle({
 
 Tab:CreateSlider({
    Name = "قوة السرعة (WalkSpeed)",
-   Range = {50, 10000},
-   Increment = 50,
+   Range = {50, 50000},
+   Increment = 100,
    Suffix = "Speed",
    CurrentValue = 1000,
    Flag = "SpeedSlider",
@@ -69,7 +68,6 @@ Tab:CreateButton({
    end,
 })
 
--- اللوب لتطبيق السرعة والقفز
 RunService.RenderStepped:Connect(function()
    if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
       LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = CustomSpeedValue
@@ -82,4 +80,4 @@ UserInputService.JumpRequest:Connect(function()
    end
 end)
 
-Rayfield:Notify({Title = "مرحباً يا حمدان 👑", Content = "تم تفعيل سكربت ماب الكيبورد بنجاح!", Duration = 5})
+Rayfield:Notify({Title = "مرحباً يا حمدان 👑", Content = "تم تحميل سكربت الكيبورد بنجاح!", Duration = 5})
