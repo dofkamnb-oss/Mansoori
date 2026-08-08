@@ -19,47 +19,74 @@ local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local Camera = Workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
 
 -- Variables
 local NoclipEnabled = false
 local FullbrightEnabled = false
 local InfiniteJumpEnabled = false
+local FlyEnabled = false
+local FlySpeed = 50
 
--- ==================== TAB 1: السرقة والسيارات 💰 ====================
-local RobTab = Window:CreateTab("السرقات 💰", 4483362458)
+-- ==================== TAB 1: السرقات والأماكن (Teleports) ====================
+local RobTab = Window:CreateTab("السرقات والأماكن 💰", 4483362458)
+
+RobTab:CreateSection("الانتقال السريع لأماكن السرقة")
 
 RobTab:CreateButton({
-   Name = "الذهاب إلى البنك (Bank Teleport)",
+   Name = "الذهاب إلى البنك (Bank)",
    Callback = function()
       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
          LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(1048, 18, 1253)
-         Rayfield:Notify({Title = "Teleport", Content = "تم نقلك إلى البنك بنجاح!", Duration = 3})
+         Rayfield:Notify({Title = "نجاح", Content = "تم نقلك إلى البنك!", Duration = 3})
       end
    end,
 })
 
 RobTab:CreateButton({
-   Name = "الذهاب إلى المتحف (Museum Teleport)",
+   Name = "الذهاب إلى المتحف (Museum)",
    Callback = function()
       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
          LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(1065, 115, 1205)
-         Rayfield:Notify({Title = "Teleport", Content = "تم نقلك إلى المتحف بنجاح!", Duration = 3})
+         Rayfield:Notify({Title = "نجاح", Content = "تم نقلك إلى المتحف!", Duration = 3})
       end
    end,
 })
 
 RobTab:CreateButton({
-   Name = "الذهاب إلى محطة النطاق / البنزين",
+   Name = "الذهاب إلى الكازينو (Casino)",
    Callback = function()
       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-         LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1625, 20, 723)
-         Rayfield:Notify({Title = "Teleport", Content = "تم نقلك إلى موقع السرقة!", Duration = 3})
+         LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(1131, 19, 1258)
+         Rayfield:Notify({Title = "نجاح", Content = "تم نقلك إلى الكازينو!", Duration = 3})
       end
    end,
 })
 
--- ==================== TAB 2: الحركة والسرعة ⚡ ====================
-local MoveTab = Window:CreateTab("الحركة ⚡", 4483362458)
+RobTab:CreateButton({
+   Name = "الذهاب إلى محطة الطاقة (Power Plant)",
+   Callback = function()
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(52, 19, 2195)
+         Rayfield:Notify({Title = "نجاح", Content = "تم نقلك إلى محطة الطاقة!", Duration = 3})
+      end
+   end,
+})
+
+RobTab:CreateSection("قواعد الخروج والسجن")
+
+RobTab:CreateButton({
+   Name = "الخروج من السجن فوراً (Escape Prison)",
+   Callback = function()
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1175, 18, -1759)
+         Rayfield:Notify({Title = "نجاح", Content = "تم إخراجك خارج السجن بنجاح!", Duration =.3})
+      end
+   end,
+})
+
+-- ==================== TAB 2: الحركة والسرعة (Movement) ====================
+local MoveTab = Window:CreateTab("الحركة والسرعة ⚡", 4483362458)
 
 MoveTab:CreateSlider({
    Name = "سرعة الشخصية (WalkSpeed)",
@@ -67,7 +94,7 @@ MoveTab:CreateSlider({
    Increment = 1,
    Suffix = "Speed",
    CurrentValue = 16,
-   Flag = "JailbreakSpeed",
+   Flag = "JB_Speed",
    Callback = function(Value)
       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
          LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
@@ -81,7 +108,7 @@ MoveTab:CreateSlider({
    Increment = 5,
    Suffix = "Power",
    CurrentValue = 50,
-   Flag = "JailbreakJump",
+   Flag = "JB_Jump",
    Callback = function(Value)
       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
          LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
@@ -99,7 +126,7 @@ MoveTab:CreateToggle({
 })
 
 MoveTab:CreateToggle({
-   Name = "القفز اللانهائي في الهواء",
+   Name = "القفز اللانهائي في الهواء (Inf Jump)",
    CurrentValue = false,
    Flag = "JB_InfJump",
    Callback = function(Value)
@@ -107,7 +134,7 @@ MoveTab:CreateToggle({
    end,
 })
 
--- ==================== TAB 3: العالم 🌐 ====================
+-- ==================== TAB 3: العالم والبيئة (World) ====================
 local WorldTab = Window:CreateTab("العالم 🌐", 4483362458)
 
 WorldTab:CreateToggle({
@@ -140,7 +167,7 @@ WorldTab:CreateSlider({
    end,
 })
 
--- ==================== LOOPS ====================
+-- ==================== LOOPS & SYSTEM LOGIC ====================
 
 RunService.Stepped:Connect(function()
     if NoclipEnabled and LocalPlayer.Character then
@@ -150,7 +177,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
+UserInputService.JumpRequest:Connect(function()
     if InfiniteJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
