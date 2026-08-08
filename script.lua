@@ -1,73 +1,66 @@
+-- +1 Speed Keyboard Escape Script - Mansoori Hub
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- تحميل واجهة Rayfield الفخمة
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "حمدان المنصوري | Keyboard Escape Pro 👑",
-   Icon = 0,
-   LoadingTitle = "Keyboard Escape Engine",
+   LoadingTitle = "جاري تحميل ماب الكيبورد والحلويات...",
    LoadingSubtitle = "by Mansoori",
    Theme = "Default",
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false,
    ConfigurationSaving = { Enabled = false },
    Discord = { Enabled = false },
    KeySystem = false
 })
 
--- Services
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
+local Tab = Window:CreateTab("السرعة والهروب ⚡", 4483362458)
 
--- Variables
-local AutoSpeed = false
-local InfiniteSpeedValue = 10000
-local AutoWinEnabled = false
+local SpeedEnabled = false
+local CustomSpeedValue = 1000
 
--- ==================== TAB 1: الفوز والسرعة (Auto Farm) ====================
-local MainTab = Window:CreateTab("السرعة الفورية ⚡", 4483362458)
-
-MainTab:CreateToggle({
-   Name = "تفعيل السرعة اللانهائية (Infinite Speed)",
+Tab:CreateToggle({
+   Name = "تفعيل زيادة السرعة الخارقة (Auto Speed)",
    CurrentValue = false,
-   Flag = "KB_InfSpeed",
+   Flag = "SpeedToggle",
    Callback = function(Value)
-      AutoSpeed = Value
+      SpeedEnabled = Value
    end,
 })
 
-MainTab:CreateSlider({
-   Name = "قوة السرعة الخارقة",
-   Range = {100, 50000},
-   Increment = 500,
+Tab:CreateSlider({
+   Name = "قوة السرعة (WalkSpeed)",
+   Range = {50, 10000},
+   Increment = 50,
    Suffix = "Speed",
-   CurrentValue = 5000,
-   Flag = "KB_SpdVal",
+   CurrentValue = 1000,
+   Flag = "SpeedSlider",
    Callback = function(Value)
-      InfiniteSpeedValue = Value
+      CustomSpeedValue = Value
    end,
 })
 
-MainTab:CreateToggle({
+Tab:CreateToggle({
    Name = "القفز اللانهائي (Inf Jump)",
    CurrentValue = false,
-   Flag = "KB_Jump",
+   Flag = "JumpToggle",
    Callback = function(Value)
       _G.InfJump = Value
    end,
 })
 
--- ==================== TAB 2: التليبرورت ونهاية الماب (Teleports) ====================
-local TeleportTab = Window:CreateTab("تخطّي المراحل 🏁", 4483362458)
-
-TeleportTab:CreateButton({
-   Name = "الانتقال إلى نهاية المرحلة الحالية (Teleport to End)",
+Tab:CreateButton({
+   Name = "تخطي ونقل إلى نهاية الماب (Teleport to End)",
    Callback = function()
-      -- محاولة البحث عن نهاية الماب أو البوابات ونقل اللاعب لها
       pcall(function()
-         for _, obj in pairs(workspace:GetDescendants()) do
-            if obj.Name:lower():find("end") or obj.Name:lower():find("finish") or obj.Name:lower():find("win") then
-               if obj:IsA("BasePart") then
-                  LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame + Vector3.new(0, 5, 0)
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v.Name:lower():find("end") or v.Name:lower():find("win") or v.Name:lower():find("finish") then
+               if v:IsA("BasePart") then
+                  LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame + Vector3.new(0, 5, 0)
+                  Rayfield:Notify({Title = "تم بنجاح", Content = "تم نقلك لنهاية المرحلة!", Duration = 3})
                   break
                end
             end
@@ -76,25 +69,17 @@ TeleportTab:CreateButton({
    end,
 })
 
-TeleportTab:CreateToggle({
-   Name = "تثبيت السرعة والتخطي التلقائي",
-   CurrentValue = false,
-   Flag = "AutoWin",
-   Callback = function(Value)
-      AutoWinEnabled = Value
-   end,
-})
-
--- ==================== LOOPS ====================
-
+-- اللوب لتطبيق السرعة والقفز
 RunService.RenderStepped:Connect(function()
-    if AutoSpeed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = InfiniteSpeedValue
-    end
+   if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+      LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = CustomSpeedValue
+   end
 end)
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if _G.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-    end
+UserInputService.JumpRequest:Connect(function()
+   if _G.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+      LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+   end
 end)
+
+Rayfield:Notify({Title = "مرحباً يا حمدان 👑", Content = "تم تفعيل سكربت ماب الكيبورد بنجاح!", Duration = 5})
