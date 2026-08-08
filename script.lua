@@ -1,9 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "حمدان المنصوري | Murderers VS Sheriffs 👑",
+   Name = "حمدان المنصوري | Keyboard Escape Hub 👑",
    Icon = 0,
-   LoadingTitle = "Mansoori Hub | MVS Engine",
+   LoadingTitle = "Mansoori Speed Engine",
    LoadingSubtitle = "by Mansoori",
    Theme = "Default",
    DisableRayfieldPrompts = false,
@@ -18,97 +18,87 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
-local Camera = Workspace.CurrentCamera
-local UserInputService = game:GetService("UserInputService")
 
 -- Variables
-local ESPEnabled = false
-local Highlights = {}
-local AimbotEnabled = false
-local FOVRadius = 150
+local AutoFarmSpeed = false
+local AutoRebirth = false
+local WalkSpeedValue = 500
 
--- ==================== TAB 1: ESP & كشف الأماكن (كشف القاتل) ====================
-local ESPTab = Window:CreateTab("كشف الأماكن (ESP) 👁️", 4483362458)
+-- ==================== TAB 1: الزراعة والسرعة (Auto Farm) ====================
+local FarmTab = Window:CreateTab("السرعة والتجميع ⚡", 4483362458)
 
-ESPTab:CreateToggle({
-   Name = "تفعيل كشف اللاعبين والأدوار (Highlight)",
+FarmTab:CreateToggle({
+   Name = "تفعيل زيادة السرعة التلقائية (Auto Speed)",
    CurrentValue = false,
-   Flag = "MVS_ESP",
+   Flag = "KB_AutoSpeed",
    Callback = function(Value)
-      ESPEnabled = Value
-      if not ESPEnabled then
-          for _, h in pairs(Highlights) do if h then h:Destroy() end end
-          Highlights = {}
+      AutoFarmSpeed = Value
+   end,
+})
+
+FarmTab:CreateSlider({
+   Name = "قوة السرعة اليدوية (WalkSpeed)",
+   Range = {16, 5000},
+   Increment = 50,
+   Suffix = "Speed",
+   CurrentValue = 100,
+   Flag = "KB_CustomSpeed",
+   Callback = function(Value)
+      WalkSpeedValue = Value
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
       end
    end,
 })
 
--- ==================== TAB 2: القتال والتنشين (Aim) ====================
-local AimTab = Window:CreateTab("التنشين الآلي 🎯", 4483362458)
-
-AimTab:CreateToggle({
-   Name = "تفعيل التنشين (Aimbot)",
+FarmTab:CreateToggle({
+   Name = "القفز اللانهائي (Infinite Jump)",
    CurrentValue = false,
-   Flag = "MVS_Aim",
+   Flag = "KB_InfJump",
    Callback = function(Value)
-      AimbotEnabled = Value
+      _G.InfJump = Value
    end,
 })
 
-AimTab:CreateSlider({
-   Name = "حجم دائرة التنشين (FOV)",
-   Range = {50, 400},
-   Increment = 5,
-   Suffix = "px",
-   CurrentValue = 150,
-   Flag = "MVS_FOV",
+-- ==================== TAB 2: العالم والمساعدة (World) ====================
+local WorldTab = Window:CreateTab("المساعدة والعالم 🌐", 4483362458)
+
+WorldTab:CreateToggle({
+   Name = "إضاءة كاملة وإزالة الظلام (Fullbright)",
+   CurrentValue = false,
+   Flag = "KB_Fullbright",
    Callback = function(Value)
-      FOVRadius = Value
+      if Value then
+          game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+          game:GetService("Lighting").Brightness = 2
+          game:GetService("Lighting").GlobalShadows = false
+      else
+          game:GetService("Lighting").Ambient = Color3.fromRGB(128, 128, 128)
+          game:GetService("Lighting").Brightness = 1
+          game:GetService("Lighting").GlobalShadows = true
+      end
+   end,
+})
+
+WorldTab:CreateButton({
+   Name = "إغلاق السكربت (Unload)",
+   Callback = function()
+      Rayfield:Destroy()
    end,
 })
 
 -- ==================== LOOPS ====================
 
 RunService.RenderStepped:Connect(function()
-    -- ESP Logic
-    if ESPEnabled then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                if not Highlights[p] or not Highlights[p].Parent then
-                    local h = Instance.new("Highlight")
-                    -- تمييز الألوان: إذا كان يحمل سلاح أو قاتل يظهر بلون مختلف
-                    h.FillColor = Color3.fromRGB(255, 50, 50)
-                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    h.Parent = p.Character
-                    Highlights[p] = h
-                end
-            end
-        end
+    -- Auto Speed Loop
+    if AutoFarmSpeed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = WalkSpeedValue
     end
+end)
 
-    -- Aimbot Logic (عند الضغط على كليك يمين الماوس)
-    if AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        local mousePos = UserInputService:GetMouseLocation()
-        local Closest = nil
-        local Dist = FOVRadius
-
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-                local head = p.Character.Head
-                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                
-                if onScreen then
-                    local d = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
-                    if d < Dist then
-                        Closest = p
-                        Dist = d
-                    end
-                end
-            end
-        end
-
-        if Closest and Closest.Character and Closest.Character:FindFirstChild("Head") then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, Closest.Character.Head.Position)
-        end
+-- Inf Jump Logic
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if _G.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
 end)
