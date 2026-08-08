@@ -1,10 +1,10 @@
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLTD/Rayfield/main/source'))()
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
-local Window = Rayfield:CreateWindow({
-   Name = "حمدان المنصوري | زايد المزروعي",
-   LoadingTitle = "تحميل...",
-   LoadingSubtitle = "",
-   ConfigurationSaving = { Enabled = false }
+local Window = OrionLib:MakeWindow({
+    Name = "حمدان المنصوري | زايد المزروعي",
+    HidePremium = true,
+    SaveConfig = false,
+    ConfigFolder = "MansooriConfig"
 })
 
 local Players = game:GetService("Players")
@@ -14,37 +14,45 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ==================== قائمة زايد ====================
-local ZayedTab = Window:CreateTab("زايد المزروعي 👑", 4483362458)
-
-ZayedTab:CreateSlider({
-   Name = "السرعة",
-   Range = {16, 200},
-   Increment = 1,
-   CurrentValue = 16,
-   Callback = function(v)
-       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-           LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = v
-       end
-   end,
+local ZayedTab = Window:MakeTab({
+    Name = "زايد المزروعي 👑",
+    Icon = "rbxassetid://4483362458",
+    PremiumOnly = false
 })
 
-ZayedTab:CreateSlider({
-   Name = "القفز",
-   Range = {50, 300},
-   Increment = 5,
-   CurrentValue = 50,
-   Callback = function(v)
-       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-           LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = v
-       end
-   end,
+ZayedTab:AddSlider({
+    Name = "السرعة",
+    Min = 16,
+    Max = 200,
+    Default = 16,
+    Increment = 1,
+    ValueName = "Speed",
+    Callback = function(v)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = v
+        end
+    end    
+})
+
+ZayedTab:AddSlider({
+    Name = "القفز",
+    Min = 50,
+    Max = 300,
+    Default = 50,
+    Increment = 5,
+    ValueName = "Jump",
+    Callback = function(v)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = v
+        end
+    end    
 })
 
 local Noclip = false
-ZayedTab:CreateToggle({
-   Name = "اختراق الجدران",
-   CurrentValue = false,
-   Callback = function(v) Noclip = v end,
+ZayedTab:AddToggle({
+    Name = "اختراق الجدران",
+    Default = false,
+    Callback = function(v) Noclip = v end    
 })
 
 RunService.Stepped:Connect(function()
@@ -56,64 +64,74 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ==================== قائمة الطيران ====================
-local MainTab = Window:CreateTab("طيران 🚀", 4483362458)
+local MainTab = Window:MakeTab({
+    Name = "طيران 🚀",
+    Icon = "rbxassetid://4483362458",
+    PremiumOnly = false
+})
 
 local Flying = false
 local FlySpeed = 50
 local flyConnection
 
-MainTab:CreateToggle({
-   Name = "تفعيل الطيران",
-   CurrentValue = false,
-   Callback = function(v)
-       Flying = v
-       local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-       local root = char:FindFirstChild("HumanoidRootPart")
-       local hum = char:FindFirstChildOfClass("Humanoid")
+MainTab:AddToggle({
+    Name = "تفعيل الطيران",
+    Default = false,
+    Callback = function(v)
+        Flying = v
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
 
-       if Flying then
-           if hum then hum.PlatformStand = true end
-           if flyConnection then flyConnection:Disconnect() end
-           flyConnection = RunService.RenderStepped:Connect(function(delta)
-               if not Flying or not char or not root then
-                   if flyConnection then flyConnection:Disconnect() end
-                   if hum then hum.PlatformStand = false end
-                   return
-               end
+        if Flying then
+            if hum then hum.PlatformStand = true end
+            if flyConnection then flyConnection:Disconnect() end
+            flyConnection = RunService.RenderStepped:Connect(function(delta)
+                if not Flying or not char or not root then
+                    if flyConnection then flyConnection:Disconnect() end
+                    if hum then hum.PlatformStand = false end
+                    return
+                end
 
-               local moveDir = Vector3.zero
-               local camCFrame = Camera.CFrame
+                local moveDir = Vector3.zero
+                local camCFrame = Camera.CFrame
 
-               if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCFrame.LookVector end
-               if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCFrame.LookVector end
-               if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCFrame.RightVector end
-               if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCFrame.RightVector end
-               if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
-               if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
 
-               if moveDir.Magnitude > 0 then moveDir = moveDir.Unit end
+                if moveDir.Magnitude > 0 then moveDir = moveDir.Unit end
 
-               root.CFrame = root.CFrame + (moveDir * FlySpeed * delta * 3)
-               root.AssemblyLinearVelocity = Vector3.zero
-               root.AssemblyAngularVelocity = Vector3.zero
-           end)
-       else
-           if flyConnection then flyConnection:Disconnect() end
-           if hum then hum.PlatformStand = false end
-       end
-   end,
+                root.CFrame = root.CFrame + (moveDir * FlySpeed * delta * 3)
+                root.AssemblyLinearVelocity = Vector3.zero
+                root.AssemblyAngularVelocity = Vector3.zero
+            end)
+        else
+            if flyConnection then flyConnection:Disconnect() end
+            if hum then hum.PlatformStand = false end
+        end
+    end
 })
 
-MainTab:CreateSlider({
-   Name = "سرعة الطيران",
-   Range = {10, 300},
-   Increment = 10,
-   CurrentValue = 50,
-   Callback = function(v) FlySpeed = v end,
+MainTab:AddSlider({
+    Name = "سرعة الطيران",
+    Min = 10,
+    Max = 300,
+    Default = 50,
+    Increment = 10,
+    ValueName = "Speed",
+    Callback = function(v) FlySpeed = v end    
 })
 
 -- ==================== قائمة القتال ====================
-local CombatTab = Window:CreateTab("قتال 🎯", 4483362458)
+local CombatTab = Window:MakeTab({
+    Name = "قتال 🎯",
+    Icon = "rbxassetid://4483362458",
+    PremiumOnly = false
+})
 
 local AimbotEnabled = false
 local FOVVisible = true
@@ -141,52 +159,56 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-CombatTab:CreateToggle({
-   Name = "Aimbot",
-   CurrentValue = false,
-   Callback = function(v) AimbotEnabled = v end,
+CombatTab:AddToggle({
+    Name = "Aimbot",
+    Default = false,
+    Callback = function(v) AimbotEnabled = v end
 })
 
-CombatTab:CreateKeybind({
-   Name = "زر القفل",
-   CurrentKeybind = "E",
-   HoldToInteract = true,
-   Callback = function(v) _G.Aiming = v end,
+CombatTab:AddBind({
+    Name = "زر القفل",
+    Default = Enum.KeyCode.E,
+    Hold = true,
+    Callback = function(v) _G.Aiming = v end    
 })
 
-CombatTab:CreateSlider({
-   Name = "السلاسة",
-   Range = {0.05, 1},
-   Increment = 0.05,
-   CurrentValue = 0.1,
-   Callback = function(v) Smoothness = v end,
+CombatTab:AddSlider({
+    Name = "السلاسة",
+    Min = 0.05,
+    Max = 1,
+    Default = 0.1,
+    Increment = 0.05,
+    ValueName = "Smoothness",
+    Callback = function(v) Smoothness = v end
 })
 
-CombatTab:CreateDropdown({
-   Name = "الهدف",
-   Options = {"Head", "HumanoidRootPart"},
-   CurrentOption = "Head",
-   Callback = function(v) TargetPart = v end,
+CombatTab:AddDropdown({
+    Name = "الهدف",
+    Default = "Head",
+    Options = {"Head", "HumanoidRootPart"},
+    Callback = function(v) TargetPart = v end
 })
 
-CombatTab:CreateToggle({
-   Name = "اختراق الجدار بالإيم",
-   CurrentValue = false,
-   Callback = function(v) WallCheck = v end,
+CombatTab:AddToggle({
+    Name = "اختراق الجدار بالإيم",
+    Default = false,
+    Callback = function(v) WallCheck = v end
 })
 
-CombatTab:CreateToggle({
-   Name = "إظهار FOV",
-   CurrentValue = true,
-   Callback = function(v) FOVVisible = v end,
+CombatTab:AddToggle({
+    Name = "إظهار FOV",
+    Default = true,
+    Callback = function(v) FOVVisible = v end
 })
 
-CombatTab:CreateSlider({
-   Name = "حجم FOV",
-   Range = {30, 500},
-   Increment = 5,
-   CurrentValue = 150,
-   Callback = function(v) FOVRadius = v end,
+CombatTab:AddSlider({
+    Name = "حجم FOV",
+    Min = 30,
+    Max = 500,
+    Default = 150,
+    Increment = 5,
+    ValueName = "Size",
+    Callback = function(v) FOVRadius = v end
 })
 
 local function IsVisible(part)
@@ -229,21 +251,25 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==================== ESP ====================
-local ESPTab = Window:CreateTab("ESP 👁️", 4483362458)
+local ESPTab = Window:MakeTab({
+    Name = "ESP 👁️",
+    Icon = "rbxassetid://4483362458",
+    PremiumOnly = false
+})
 
 local ESPEnabled = false
 local Highlights = {}
 
-ESPTab:CreateToggle({
-   Name = "تفعيل ESP",
-   CurrentValue = false,
-   Callback = function(v)
-       ESPEnabled = v
-       if not ESPEnabled then
-           for _, h in pairs(Highlights) do if h then h:Destroy() end end
-           Highlights = {}
-       end
-   end,
+ESPTab:AddToggle({
+    Name = "تفعيل ESP",
+    Default = false,
+    Callback = function(v)
+        ESPEnabled = v
+        if not ESPEnabled then
+            for _, h in pairs(Highlights) do if h then h:Destroy() end end
+            Highlights = {}
+        end
+    end
 })
 
 RunService.RenderStepped:Connect(function()
@@ -261,3 +287,5 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
+OrionLib:Init()
