@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "المنصوري | زايد",
+   Name = "حمدان المنصوري | زايد المزروعي",
    LoadingTitle = "تحميل...",
    LoadingSubtitle = "",
    ConfigurationSaving = { Enabled = false }
@@ -14,7 +14,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ==================== قائمة زايد ====================
-local ZayedTab = Window:CreateTab("زايد 👑", 4483362458)
+local ZayedTab = Window:CreateTab("زايد المزروعي 👑", 4483362458)
 
 ZayedTab:CreateSlider({
    Name = "السرعة",
@@ -240,7 +240,7 @@ ESPTab:CreateToggle({
    Callback = function(v)
        ESPEnabled = v
        if not ESPEnabled then
-           for _, h in pairs(Highlights) do if h then h:Destroy() end end
+           for _, h in pairs(Highlights) do if h me then h:Destroy() end end
            Highlights = {}
        end
    end,
