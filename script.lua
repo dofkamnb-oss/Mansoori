@@ -1,85 +1,114 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local Window = Fluent:CreateWindow({
-    Title = "حمدان المنصوري | Jailbreak Ultimate Auto-Rob",
-    SubTitle = "by Mansoori",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
+local Window = Rayfield:CreateWindow({
+   Name = "حمدان المنصوري | Murderers VS Sheriffs 👑",
+   Icon = 0,
+   LoadingTitle = "Mansoori Hub | MVS Engine",
+   LoadingSubtitle = "by Mansoori",
+   Theme = "Default",
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false,
+   ConfigurationSaving = { Enabled = false },
+   Discord = { Enabled = false },
+   KeySystem = false
 })
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "السرقة التلقائية 💰", Icon = "scroll" }),
-    Movement = Window:AddTab({ Title = "الطيران والحركة 🚀", Icon = "rocket" }),
-    Settings = Window:AddTab({ Title = "الإعدادات ⚙️", Icon = "settings" })
-}
+-- Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Camera = Workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
 
--- تبويب السرقة التلقائية
-Tabs.Main:AddParagraph({
-    Title = "نظام السرقات الذكي",
-    Content = "قم بتفعيل السرقة وسيقوم السكربت بالتحرك والتفاعل مع الأماكن تلقائياً."
+-- Variables
+local ESPEnabled = false
+local Highlights = {}
+local AimbotEnabled = false
+local FOVRadius = 150
+
+-- ==================== TAB 1: ESP & كشف الأماكن (كشف القاتل) ====================
+local ESPTab = Window:CreateTab("كشف الأماكن (ESP) 👁️", 4483362458)
+
+ESPTab:CreateToggle({
+   Name = "تفعيل كشف اللاعبين والأدوار (Highlight)",
+   CurrentValue = false,
+   Flag = "MVS_ESP",
+   Callback = function(Value)
+      ESPEnabled = Value
+      if not ESPEnabled then
+          for _, h in pairs(Highlights) do if h then h:Destroy() end end
+          Highlights = {}
+      end
+   end,
 })
 
-Tabs.Main:AddButton({
-    Title = "تفعيل Auto-Rob (سرقة البنك والمتحف تلقائياً)",
-    Description = "يبدأ بتنفيذ مسار السرقات بنفسه",
-    Callback = function()
-        Fluent:Notify({ Title = "الحالة", Content = "جاري تفعيل نظام السرقة التلقائية...", Duration = 3 })
-        -- محرك السرقة التلقائية المباشر
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/eduxg/Jailbreak-AutoRob/main/main.lua"))()
-        end)
-    end
+-- ==================== TAB 2: القتال والتنشين (Aim) ====================
+local AimTab = Window:CreateTab("التنشين الآلي 🎯", 4483362458)
+
+AimTab:CreateToggle({
+   Name = "تفعيل التنشين (Aimbot)",
+   CurrentValue = false,
+   Flag = "MVS_Aim",
+   Callback = function(Value)
+      AimbotEnabled = Value
+   end,
 })
 
-Tabs.Main:AddButton({
-    Title = "الخروج التلقائي من السجن (Auto Escape)",
-    Callback = function()
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1175, 18, -1759)
-            Fluent:Notify({ Title = "نجاح", Content = "تم إخراجك من السجن!", Duration = 2 })
+AimTab:CreateSlider({
+   Name = "حجم دائرة التنشين (FOV)",
+   Range = {50, 400},
+   Increment = 5,
+   Suffix = "px",
+   CurrentValue = 150,
+   Flag = "MVS_FOV",
+   Callback = function(Value)
+      FOVRadius = Value
+   end,
+})
+
+-- ==================== LOOPS ====================
+
+RunService.RenderStepped:Connect(function()
+    -- ESP Logic
+    if ESPEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                if not Highlights[p] or not Highlights[p].Parent then
+                    local h = Instance.new("Highlight")
+                    -- تمييز الألوان: إذا كان يحمل سلاح أو قاتل يظهر بلون مختلف
+                    h.FillColor = Color3.fromRGB(255, 50, 50)
+                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.Parent = p.Character
+                    Highlights[p] = h
+                end
+            end
         end
     end
-})
 
--- تبويب الحركة والطيران
-Tabs.Movement:AddButton({
-    Title = "تفعيل الطيران الاحترافي (Fly V2)",
-    Description = "يسمح لك بالطيران بحرية ودون أخطاء",
-    Callback = function()
-        Fluent:Notify({ Title = "الطيران", Content = "تم تفعيل محرك الطيران (استخدم مفاتيح WASD للتحرك)", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/corupted/fly/main/fly.lua"))()
-        end)
-    end
-})
+    -- Aimbot Logic (عند الضغط على كليك يمين الماوس)
+    if AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local mousePos = UserInputService:GetMouseLocation()
+        local Closest = nil
+        local Dist = FOVRadius
 
-Tabs.Movement:AddSlider("SpeedSlider", {
-    Title = "سرعة الشخصية",
-    Description = "زيادة السرعة يدوياً",
-    Default = 16,
-    Min = 16,
-    Max = 200,
-    Rounding = 1,
-    Callback = function(Value)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-            game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                local head = p.Character.Head
+                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                
+                if onScreen then
+                    local d = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                    if d < Dist then
+                        Closest = p
+                        Dist = d
+                    end
+                end
+            end
+        end
+
+        if Closest and Closest.Character and Closest.Character:FindFirstChild("Head") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, Closest.Character.Head.Position)
         end
     end
-})
-
--- تبويب الإعدادات
-Tabs.Settings:AddButton({
-    Title = "إغلاق السكربت بالكامل (Unload)",
-    Callback = function()
-        Window:Destroy()
-    end
-})
-
-Fluent:Notify({
-    Title = "تم تحميل السكربت بنجاح! 👑",
-    Content = "مرحباً بك يا حمدان، السكربت جاهز للسيطرة على ماب جليبريك.",
-    Duration = 5
-})
+end)
