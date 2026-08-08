@@ -3,7 +3,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "حمدان المنصوري | زايد المزروعي 👑",
    Icon = 0,
-   LoadingTitle = "Mansoori Hub V2 Pro",
+   LoadingTitle = "Mansoori Hub V3 Ultimate",
    LoadingSubtitle = "by Mansoori",
    Theme = "Default",
    DisableRayfieldPrompts = false,
@@ -19,9 +19,10 @@ local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+local TeleportService = game:GetService("TeleportService")
 local Camera = Workspace.CurrentCamera
 
--- Drawing Elements Setup
+-- Drawing Setup
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Color = Color3.fromRGB(0, 255, 150)
 FOVCircle.Thickness = 1.5
@@ -39,8 +40,27 @@ CrosshairV.Thickness = 1.5
 CrosshairH.Visible = false
 CrosshairV.Visible = false
 
--- State Variables
+-- Minimap Radar Setup
+local RadarBackground = Drawing.new("Circle")
+RadarBackground.Radius = 60
+RadarBackground.Thickness = 2
+RadarBackground.Color = Color3.fromRGB(30, 30, 30)
+RadarBackground.Filled = true
+RadarBackground.Visible = false
+RadarBackground.Position = Vector2.new(100, 200)
+
+local RadarCenter = Drawing.new("Circle")
+RadarCenter.Radius = 3
+RadarCenter.Color = Color3.fromRGB(0, 255, 0)
+RadarCenter.Filled = true
+RadarCenter.Visible = false
+RadarCenter.Position = RadarBackground.Position
+
+local RadarDots = {}
+
+-- Variables
 local AimbotEnabled = false
+local SilentAimEnabled = false
 local ShowFOV = false
 local FOVRadius = 150
 local Smoothness = 0.2
@@ -48,6 +68,7 @@ local TargetPart = "Head"
 local HitboxEnabled = false
 local HitboxSize = 5
 local ShowCrosshair = false
+local ShowRadar = false
 
 local ESPEnabled = false
 local ESPNamesEnabled = false
@@ -182,7 +203,7 @@ MainTab:CreateButton({
           VirtualUser:CaptureController()
           VirtualUser:ClickButton2(Vector2.new())
       end)
-      Rayfield:Notify({Title = "Anti-AFK", Content = "تم تفعيل حماية الطرد التلقائي بنجاح!", Duration = 3})
+      Rayfield:Notify({Title = "Anti-AFK", Content = "تم تفعيل حماية الطرد التلقائي!", Duration = 3})
    end,
 })
 
@@ -190,11 +211,20 @@ MainTab:CreateButton({
 local CombatTab = Window:CreateTab("القتال 🎯", 4483362458)
 
 CombatTab:CreateToggle({
-   Name = "تفعيل Aimbot (زر E أو الماوس الأيمن)",
+   Name = "تفعيل Aimbot العادي",
    CurrentValue = false,
    Flag = "AimbotToggle",
    Callback = function(Value)
       AimbotEnabled = Value
+   end,
+})
+
+CombatTab:CreateToggle({
+   Name = "تفعيل Silent Aim (التنشين الخفي)",
+   CurrentValue = false,
+   Flag = "SilentAimToggle",
+   Callback = function(Value)
+      SilentAimEnabled = Value
    end,
 })
 
@@ -254,7 +284,7 @@ CombatTab:CreateToggle({
 })
 
 CombatTab:CreateSlider({
-   Name = "حجم تكبير الرأس/الهيت بوكس",
+   Name = "حجم تكبير الرأس",
    Range = {2, 20},
    Increment = 1,
    Suffix = "Size",
@@ -266,7 +296,7 @@ CombatTab:CreateSlider({
 })
 
 CombatTab:CreateToggle({
-   Name = "إظهار نيجان تصويب مخصص (Crosshair)",
+   Name = "إظهار نيشان تصويب مخصص (Crosshair)",
    CurrentValue = false,
    Flag = "CrosshairToggle",
    Callback = function(Value)
@@ -306,7 +336,7 @@ ESPTab:CreateToggle({
 })
 
 ESPTab:CreateToggle({
-   Name = "خطوط التتبع للاعبين (Tracers)",
+   Name = "خطوط التتبع (Tracers)",
    CurrentValue = false,
    Flag = "ESPTracersToggle",
    Callback = function(Value)
@@ -318,16 +348,59 @@ ESPTab:CreateToggle({
    end,
 })
 
--- ==================== TAB 4: العالم والبيئة 🌐 ====================
+ESPTab:CreateToggle({
+   Name = "تفعيل الرادار المصغر (Minimap Radar)",
+   CurrentValue = false,
+   Flag = "RadarToggle",
+   Callback = function(Value)
+      ShowRadar = Value
+      RadarBackground.Visible = Value
+      RadarCenter.Visible = Value
+      if not ShowRadar then
+          for _, dot in pairs(RadarDots) do if dot then dot.Visible = false end end
+      end
+   end,
+})
+
+-- ==================== TAB 4: سكربتات الألعاب 🎮 ====================
+local GamesTab = Window:CreateTab("الألعاب 🎮", 4483362458)
+
+GamesTab:CreateButton({
+   Name = "تشغيل سكربت Blox Fruits الشامل",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/BloxFruits/main/Source.lua"))()
+   end,
+})
+
+GamesTab:CreateButton({
+   Name = "تشغيل سكربت Arsenal الاحترافي",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/Quenty/NevermoreEngine/main/loader.lua"))()
+   end,
+})
+
+GamesTab:CreateButton({
+   Name = "تشغيل سكربت Da Hood الخارق",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/SpaceHubPortal/SpaceHub/main/main"))()
+   end,
+})
+
+GamesTab:CreateButton({
+   Name = "تشغيل سكربت Brookhaven VVIP",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/IceManeMane/IceHub/main/Brookhaven"))()
+   end,
+})
+
+-- ==================== TAB 5: العالم 🌐 ====================
 local WorldTab = Window:CreateTab("العالم 🌐", 4483362458)
 
-local FullbrightEnabled = false
 WorldTab:CreateToggle({
-   Name = "إضاءة كاملة / إلغاء الظلام (Fullbright)",
+   Name = "إضاءة كاملة (Fullbright)",
    CurrentValue = false,
    Flag = "FullbrightToggle",
    Callback = function(Value)
-      FullbrightEnabled = Value
       if Value then
           game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
           game:GetService("Lighting").Brightness = 2
@@ -362,15 +435,15 @@ WorldTab:CreateButton({
               v:Destroy()
           end
       end
-      Rayfield:Notify({Title = "FPS Booster", Content = "تم تحسين أداء اللعبة وتقليل الجرافيكس!", Duration = 3})
+      Rayfield:Notify({Title = "FPS Booster", Content = "تم تقليل الجرافيكس وتحسين الأداء!", Duration = 3})
    end,
 })
 
--- ==================== TAB 5: الأدوات والمرح 🛠️ ====================
+-- ==================== TAB 6: أدوات ومرح 🛠️ ====================
 local MiscTab = Window:CreateTab("أدوات ومرح 🛠️", 4483362458)
 
 MiscTab:CreateButton({
-   Name = "إعطاء أداة الانتقال بمكان الماوس (Click TP Tool)",
+   Name = "إعطاء أداة الانتقال (Click TP Tool)",
    Callback = function()
       local tpTool = Instance.new("Tool")
       tpTool.Name = "Click Teleport"
@@ -382,7 +455,14 @@ MiscTab:CreateButton({
           end
       end)
       tpTool.Parent = LocalPlayer.Backpack
-      Rayfield:Notify({Title = "Click TP", Content = "تمت إضافة أداة الانتقال إلى الحقيبة!", Duration = 3})
+      Rayfield:Notify({Title = "Click TP", Content = "تمت إضافة الأداة إلى الحقيبة!", Duration = 3})
+   end,
+})
+
+MiscTab:CreateButton({
+   Name = "الانتقال إلى سيرفر آخر (Server Hop)",
+   Callback = function()
+      TeleportService:Teleport(game.PlaceId, LocalPlayer)
    end,
 })
 
@@ -409,7 +489,6 @@ MiscTab:CreateSlider({
 
 -- ==================== RENDER LOOPS ====================
 
--- Noclip & SpinBot Loop
 RunService.Stepped:Connect(function()
     if NoclipEnabled and LocalPlayer.Character then
         for _, p in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -421,15 +500,12 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- RenderStepped Main Loop
 RunService.RenderStepped:Connect(function()
     local mousePos = UserInputService:GetMouseLocation()
     
-    -- Update FOV Circle
     FOVCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
     FOVCircle.Visible = ShowFOV
 
-    -- Update Crosshair
     if ShowCrosshair then
         local viewportSize = Camera.ViewportSize
         local center = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
@@ -439,7 +515,6 @@ RunService.RenderStepped:Connect(function()
         CrosshairV.To = Vector2.new(center.X, center.Y + 10)
     end
 
-    -- Hitbox Extender Loop
     if HitboxEnabled then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
@@ -450,30 +525,63 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Aimbot Loop
-    if AimbotEnabled then
-        if UserInputService:IsKeyDown(Enum.KeyCode.E) or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-            local Closest = nil
-            local Dist = FOVRadius
+    -- Aimbot & Silent Aim Loop
+    if AimbotEnabled or SilentAimEnabled then
+        local Closest = nil
+        local Dist = FOVRadius
 
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(TargetPart) and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-                    local part = p.Character[TargetPart]
-                    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                    if onScreen then
-                        local d = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
-                        if d < Dist then
-                            Closest = p
-                            Dist = d
-                        end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(TargetPart) and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                local part = p.Character[TargetPart]
+                local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                if onScreen then
+                    local d = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                    if d < Dist then
+                        Closest = p
+                        Dist = d
                     end
                 end
             end
+        end
 
-            if Closest and Closest.Character and Closest.Character:FindFirstChild(TargetPart) then
-                local targetPos = Closest.Character[TargetPart].Position
-                local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, Smoothness)
+        if Closest and Closest.Character and Closest.Character:FindFirstChild(TargetPart) then
+            local targetPos = Closest.Character[TargetPart].Position
+            if AimbotEnabled and (UserInputService:IsKeyDown(Enum.KeyCode.E) or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)) then
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), Smoothness)
+            end
+        end
+    end
+
+    -- Radar Loop
+    if ShowRadar and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local myRoot = LocalPlayer.Character.HumanoidRootPart
+        local radarPos = RadarBackground.Position
+
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local targetRoot = p.Character.HumanoidRootPart
+                local relPos = targetRoot.Position - myRoot.Position
+                local dist = Vector2.new(relPos.X, relPos.Z).Magnitude
+
+                if not RadarDots[p] then
+                    local dot = Drawing.new("Circle")
+                    dot.Radius = 3
+                    dot.Color = Color3.fromRGB(255, 0, 0)
+                    dot.Filled = true
+                    RadarDots[p] = dot
+                end
+
+                local dot = RadarDots[p]
+                if dist <= 300 then
+                    local angle = math.atan2(relPos.Z, relPos.X)
+                    local scaledDist = (dist / 300) * 55
+                    dot.Position = radarPos + Vector2.new(math.cos(angle) * scaledDist, math.sin(angle) * scaledDist)
+                    dot.Visible = true
+                else
+                    dot.Visible = false
+                end
+            else
+                if RadarDots[p] then RadarDots[p].Visible = false end
             end
         end
     end
@@ -493,7 +601,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Text & Distance ESP Loop
+    -- ESP Names Loop
     if ESPNamesEnabled then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChildOfClass("Humanoid") then
