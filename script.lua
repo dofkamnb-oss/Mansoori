@@ -240,7 +240,7 @@ ESPTab:CreateToggle({
    Callback = function(v)
        ESPEnabled = v
        if not ESPEnabled then
-           for _, h in pairs(Highlights) do if h me then h:Destroy() end end
+           for _, h in pairs(Highlights) do if h then h:Destroy() end end
            Highlights = {}
        end
    end,
