@@ -3,37 +3,68 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "حمدان المنصوري | زايد المزروعي 👑",
    Icon = 0,
-   LoadingTitle = "Mansoori Hub",
+   LoadingTitle = "Mansoori Hub V2 Pro",
    LoadingSubtitle = "by Mansoori",
    Theme = "Default",
    DisableRayfieldPrompts = false,
    DisableBuildWarnings = false,
-   ConfigurationSaving = {
-      Enabled = false
-   },
-   Discord = {
-      Enabled = false
-   },
+   ConfigurationSaving = { Enabled = false },
+   Discord = { Enabled = false },
    KeySystem = false
 })
 
--- FOV Circle Setup
+-- Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Camera = Workspace.CurrentCamera
+
+-- Drawing Elements Setup
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+FOVCircle.Color = Color3.fromRGB(0, 255, 150)
 FOVCircle.Thickness = 1.5
 FOVCircle.NumSides = 100
 FOVCircle.Radius = 150
 FOVCircle.Filled = false
 FOVCircle.Visible = false
 
--- Aimbot Variables
+local CrosshairH = Drawing.new("Line")
+local CrosshairV = Drawing.new("Line")
+CrosshairH.Color = Color3.fromRGB(255, 0, 0)
+CrosshairV.Color = Color3.fromRGB(255, 0, 0)
+CrosshairH.Thickness = 1.5
+CrosshairV.Thickness = 1.5
+CrosshairH.Visible = false
+CrosshairV.Visible = false
+
+-- State Variables
 local AimbotEnabled = false
 local ShowFOV = false
 local FOVRadius = 150
 local Smoothness = 0.2
 local TargetPart = "Head"
+local HitboxEnabled = false
+local HitboxSize = 5
+local ShowCrosshair = false
 
--- Tab 1: الرئيسية
+local ESPEnabled = false
+local ESPNamesEnabled = false
+local ESPTracersEnabled = false
+local Highlights = {}
+local ESPTextDrawings = {}
+local ESPTracerDrawings = {}
+
+local NoclipEnabled = false
+local Flying = false
+local FlySpeed = 50
+local flyConnection
+local InfJumpEnabled = false
+local SpinBotEnabled = false
+local SpinSpeed = 20
+
+-- ==================== TAB 1: الرئيسية ⚡ ====================
 local MainTab = Window:CreateTab("الرئيسية ⚡", 4483362458)
 
 MainTab:CreateSlider({
@@ -44,8 +75,8 @@ MainTab:CreateSlider({
    CurrentValue = 16,
    Flag = "SpeedSlider",
    Callback = function(Value)
-      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-         game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
       end
    end,
 })
@@ -58,13 +89,12 @@ MainTab:CreateSlider({
    CurrentValue = 50,
    Flag = "JumpSlider",
    Callback = function(Value)
-      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-         game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
       end
    end,
 })
 
-local FlySpeed = 50
 MainTab:CreateSlider({
    Name = "سرعة الطيران (Fly Speed)",
    Range = {10, 300},
@@ -77,34 +107,12 @@ MainTab:CreateSlider({
    end,
 })
 
-local NoclipEnabled = false
-MainTab:CreateToggle({
-   Name = "اختراق الجدران (Noclip)",
-   CurrentValue = false,
-   Flag = "NoclipToggle",
-   Callback = function(Value)
-      NoclipEnabled = Value
-   end,
-})
-
-game:GetService("RunService").Stepped:Connect(function()
-    if NoclipEnabled and game.Players.LocalPlayer.Character then
-        for _, p in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-            if p:IsA("BasePart") then p.CanCollide = false end
-        end
-    end
-end)
-
-local Flying = false
-local flyConnection
-
 MainTab:CreateToggle({
    Name = "الطيران (Fly)",
    CurrentValue = false,
    Flag = "FlyToggle",
    Callback = function(Value)
       Flying = Value
-      local LocalPlayer = game.Players.LocalPlayer
       local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
       local root = char:FindFirstChild("HumanoidRootPart")
       local hum = char:FindFirstChildOfClass("Humanoid")
@@ -112,7 +120,7 @@ MainTab:CreateToggle({
       if Flying then
           if hum then hum.PlatformStand = true end
           if flyConnection then flyConnection:Disconnect() end
-          flyConnection = game:GetService("RunService").RenderStepped:Connect(function(delta)
+          flyConnection = RunService.RenderStepped:Connect(function(delta)
               if not Flying or not char or not root then
                   if flyConnection then flyConnection:Disconnect() end
                   if hum then hum.PlatformStand = false end
@@ -120,8 +128,6 @@ MainTab:CreateToggle({
               end
 
               local moveDir = Vector3.zero
-              local Camera = workspace.CurrentCamera
-              local UserInputService = game:GetService("UserInputService")
               local camCFrame = Camera.CFrame
 
               if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCFrame.LookVector end
@@ -144,7 +150,43 @@ MainTab:CreateToggle({
    end,
 })
 
--- Tab 2: القتال
+MainTab:CreateToggle({
+   Name = "اختراق الجدران (Noclip)",
+   CurrentValue = false,
+   Flag = "NoclipToggle",
+   Callback = function(Value)
+      NoclipEnabled = Value
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "القفز اللانهائي (Infinite Jump)",
+   CurrentValue = false,
+   Flag = "InfJumpToggle",
+   Callback = function(Value)
+      InfJumpEnabled = Value
+   end,
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if InfJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end)
+
+MainTab:CreateButton({
+   Name = "تفعيل حماية الخمول (Anti-AFK)",
+   Callback = function()
+      local VirtualUser = game:GetService("VirtualUser")
+      LocalPlayer.Idled:Connect(function()
+          VirtualUser:CaptureController()
+          VirtualUser:ClickButton2(Vector2.new())
+      end)
+      Rayfield:Notify({Title = "Anti-AFK", Content = "تم تفعيل حماية الطرد التلقائي بنجاح!", Duration = 3})
+   end,
+})
+
+-- ==================== TAB 2: القتال 🎯 ====================
 local CombatTab = Window:CreateTab("القتال 🎯", 4483362458)
 
 CombatTab:CreateToggle({
@@ -202,31 +244,224 @@ CombatTab:CreateDropdown({
    end,
 })
 
--- Update FOV Circle Position
-game:GetService("RunService").RenderStepped:Connect(function()
-    local UserInputService = game:GetService("UserInputService")
-    local mousePos = UserInputService:GetMouseLocation()
-    FOVCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
-    FOVCircle.Visible = ShowFOV
+CombatTab:CreateToggle({
+   Name = "تكبير رؤوس الأعداء (Hitbox Extender)",
+   CurrentValue = false,
+   Flag = "HitboxToggle",
+   Callback = function(Value)
+      HitboxEnabled = Value
+   end,
+})
+
+CombatTab:CreateSlider({
+   Name = "حجم تكبير الرأس/الهيت بوكس",
+   Range = {2, 20},
+   Increment = 1,
+   Suffix = "Size",
+   CurrentValue = 5,
+   Flag = "HitboxSizeSlider",
+   Callback = function(Value)
+      HitboxSize = Value
+   end,
+})
+
+CombatTab:CreateToggle({
+   Name = "إظهار نيجان تصويب مخصص (Crosshair)",
+   CurrentValue = false,
+   Flag = "CrosshairToggle",
+   Callback = function(Value)
+      ShowCrosshair = Value
+      CrosshairH.Visible = Value
+      CrosshairV.Visible = Value
+   end,
+})
+
+-- ==================== TAB 3: كشف الأماكن 👁️ ====================
+local ESPTab = Window:CreateTab("كشف الأماكن 👁️", 4483362458)
+
+ESPTab:CreateToggle({
+   Name = "كشف التوهج (Highlight ESP)",
+   CurrentValue = false,
+   Flag = "ESPToggle",
+   Callback = function(Value)
+      ESPEnabled = Value
+      if not ESPEnabled then
+          for _, h in pairs(Highlights) do if h then h:Destroy() end end
+          Highlights = {}
+      end
+   end,
+})
+
+ESPTab:CreateToggle({
+   Name = "إظهار أسماء اللاعبين والمسافة والصحة",
+   CurrentValue = false,
+   Flag = "ESPNamesToggle",
+   Callback = function(Value)
+      ESPNamesEnabled = Value
+      if not ESPNamesEnabled then
+          for _, d in pairs(ESPTextDrawings) do if d then d:Remove() end end
+          ESPTextDrawings = {}
+      end
+   end,
+})
+
+ESPTab:CreateToggle({
+   Name = "خطوط التتبع للاعبين (Tracers)",
+   CurrentValue = false,
+   Flag = "ESPTracersToggle",
+   Callback = function(Value)
+      ESPTracersEnabled = Value
+      if not ESPTracersEnabled then
+          for _, t in pairs(ESPTracerDrawings) do if t then t:Remove() end end
+          ESPTracerDrawings = {}
+      end
+   end,
+})
+
+-- ==================== TAB 4: العالم والبيئة 🌐 ====================
+local WorldTab = Window:CreateTab("العالم 🌐", 4483362458)
+
+local FullbrightEnabled = false
+WorldTab:CreateToggle({
+   Name = "إضاءة كاملة / إلغاء الظلام (Fullbright)",
+   CurrentValue = false,
+   Flag = "FullbrightToggle",
+   Callback = function(Value)
+      FullbrightEnabled = Value
+      if Value then
+          game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+          game:GetService("Lighting").Brightness = 2
+          game:GetService("Lighting").GlobalShadows = false
+      else
+          game:GetService("Lighting").Ambient = Color3.fromRGB(128, 128, 128)
+          game:GetService("Lighting").Brightness = 1
+          game:GetService("Lighting").GlobalShadows = true
+      end
+   end,
+})
+
+WorldTab:CreateSlider({
+   Name = "مدى رؤية الكاميرا (Camera FOV)",
+   Range = {70, 120},
+   Increment = 1,
+   Suffix = "FOV",
+   CurrentValue = 70,
+   Flag = "CameraFOVSlider",
+   Callback = function(Value)
+      Camera.FieldOfView = Value
+   end,
+})
+
+WorldTab:CreateButton({
+   Name = "تسريع اللعبة وتقليل اللاج (FPS Booster)",
+   Callback = function()
+      for _, v in pairs(Workspace:GetDescendants()) do
+          if v:IsA("BasePart") then
+              v.Material = Enum.Material.SmoothPlastic
+          elseif v:IsA("Decal") or v:IsA("Texture") then
+              v:Destroy()
+          end
+      end
+      Rayfield:Notify({Title = "FPS Booster", Content = "تم تحسين أداء اللعبة وتقليل الجرافيكس!", Duration = 3})
+   end,
+})
+
+-- ==================== TAB 5: الأدوات والمرح 🛠️ ====================
+local MiscTab = Window:CreateTab("أدوات ومرح 🛠️", 4483362458)
+
+MiscTab:CreateButton({
+   Name = "إعطاء أداة الانتقال بمكان الماوس (Click TP Tool)",
+   Callback = function()
+      local tpTool = Instance.new("Tool")
+      tpTool.Name = "Click Teleport"
+      tpTool.RequiresHandle = false
+      tpTool.Activated:Connect(function()
+          local mouse = LocalPlayer:GetMouse()
+          if mouse and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+              LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3, 0))
+          end
+      end)
+      tpTool.Parent = LocalPlayer.Backpack
+      Rayfield:Notify({Title = "Click TP", Content = "تمت إضافة أداة الانتقال إلى الحقيبة!", Duration = 3})
+   end,
+})
+
+MiscTab:CreateToggle({
+   Name = "التدوير السريع (SpinBot)",
+   CurrentValue = false,
+   Flag = "SpinBotToggle",
+   Callback = function(Value)
+      SpinBotEnabled = Value
+   end,
+})
+
+MiscTab:CreateSlider({
+   Name = "سرعة التدوير",
+   Range = {10, 100},
+   Increment = 5,
+   Suffix = "Speed",
+   CurrentValue = 20,
+   Flag = "SpinSpeedSlider",
+   Callback = function(Value)
+      SpinSpeed = Value
+   end,
+})
+
+-- ==================== RENDER LOOPS ====================
+
+-- Noclip & SpinBot Loop
+RunService.Stepped:Connect(function()
+    if NoclipEnabled and LocalPlayer.Character then
+        for _, p in pairs(LocalPlayer.Character:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+    end
+    if SpinBotEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(SpinSpeed), 0)
+    end
 end)
 
--- Aimbot Loop
-game:GetService("RunService").RenderStepped:Connect(function()
+-- RenderStepped Main Loop
+RunService.RenderStepped:Connect(function()
+    local mousePos = UserInputService:GetMouseLocation()
+    
+    -- Update FOV Circle
+    FOVCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
+    FOVCircle.Visible = ShowFOV
+
+    -- Update Crosshair
+    if ShowCrosshair then
+        local viewportSize = Camera.ViewportSize
+        local center = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+        CrosshairH.From = Vector2.new(center.X - 10, center.Y)
+        CrosshairH.To = Vector2.new(center.X + 10, center.Y)
+        CrosshairV.From = Vector2.new(center.X, center.Y - 10)
+        CrosshairV.To = Vector2.new(center.X, center.Y + 10)
+    end
+
+    -- Hitbox Extender Loop
+    if HitboxEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                p.Character.Head.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                p.Character.Head.Transparency = 0.5
+                p.Character.Head.CanCollide = false
+            end
+        end
+    end
+
+    -- Aimbot Loop
     if AimbotEnabled then
-        local UserInputService = game:GetService("UserInputService")
         if UserInputService:IsKeyDown(Enum.KeyCode.E) or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-            local LocalPlayer = game.Players.LocalPlayer
-            local Camera = workspace.CurrentCamera
             local Closest = nil
             local Dist = FOVRadius
-            local MousePos = UserInputService:GetMouseLocation()
 
-            for _, p in pairs(game.Players:GetPlayers()) do
+            for _, p in pairs(Players:GetPlayers()) do
                 if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(TargetPart) and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
                     local part = p.Character[TargetPart]
                     local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
                     if onScreen then
-                        local d = (Vector2.new(pos.X, pos.Y) - MousePos).Magnitude
+                        local d = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
                         if d < Dist then
                             Closest = p
                             Dist = d
@@ -242,36 +477,81 @@ game:GetService("RunService").RenderStepped:Connect(function()
             end
         end
     end
-end)
 
--- ESP
-local ESPEnabled = false
-local Highlights = {}
-CombatTab:CreateToggle({
-   Name = "كشف اللاعبين (ESP)",
-   CurrentValue = false,
-   Flag = "ESPToggle",
-   Callback = function(Value)
-      ESPEnabled = Value
-      if not ESPEnabled then
-          for _, h in pairs(Highlights) do if h then h:Destroy() end end
-          Highlights = {}
-      end
-   end,
-})
-
-game:GetService("RunService").RenderStepped:Connect(function()
+    -- Highlight ESP Loop
     if ESPEnabled then
-        local LocalPlayer = game.Players.LocalPlayer
-        for _, p in pairs(game.Players:GetPlayers()) do
+        for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character then
                 if not Highlights[p] or not Highlights[p].Parent then
                     local h = Instance.new("Highlight")
-                    h.FillColor = Color3.fromRGB(255, 0, 0)
+                    h.FillColor = Color3.fromRGB(255, 50, 50)
                     h.OutlineColor = Color3.fromRGB(255, 255, 255)
                     h.Parent = p.Character
                     Highlights[p] = h
                 end
+            end
+        end
+    end
+
+    -- Text & Distance ESP Loop
+    if ESPNamesEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChildOfClass("Humanoid") then
+                local head = p.Character.Head
+                local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                
+                if not ESPTextDrawings[p] then
+                    local txt = Drawing.new("Text")
+                    txt.Size = 16
+                    txt.Center = true
+                    txt.Outline = true
+                    txt.Color = Color3.fromRGB(255, 255, 255)
+                    ESPTextDrawings[p] = txt
+                end
+
+                local txt = ESPTextDrawings[p]
+                if onScreen then
+                    local dist = math.floor((head.Position - Camera.CFrame.Position).Magnitude)
+                    txt.Text = p.Name .. " | " .. dist .. "m | HP: " .. math.floor(hum.Health)
+                    txt.Position = Vector2.new(pos.X, pos.Y - 30)
+                    txt.Visible = true
+                else
+                    txt.Visible = false
+                end
+            else
+                if ESPTextDrawings[p] then ESPTextDrawings[p].Visible = false end
+            end
+        end
+    end
+
+    -- Tracers Loop
+    if ESPTracersEnabled then
+        local viewportSize = Camera.ViewportSize
+        local bottomCenter = Vector2.new(viewportSize.X / 2, viewportSize.Y)
+
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local root = p.Character.HumanoidRootPart
+                local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+
+                if not ESPTracerDrawings[p] then
+                    local line = Drawing.new("Line")
+                    line.Color = Color3.fromRGB(0, 255, 255)
+                    line.Thickness = 1.5
+                    ESPTracerDrawings[p] = line
+                end
+
+                local line = ESPTracerDrawings[p]
+                if onScreen then
+                    line.From = bottomCenter
+                    line.To = Vector2.new(pos.X, pos.Y)
+                    line.Visible = true
+                else
+                    line.Visible = false
+                end
+            else
+                if ESPTracerDrawings[p] then ESPTracerDrawings[p].Visible = false end
             end
         end
     end
