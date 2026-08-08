@@ -17,7 +17,23 @@ local Window = Rayfield:CreateWindow({
    KeySystem = false
 })
 
--- Tab 1: اللاعب والسرعة
+-- FOV Circle Setup
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+FOVCircle.Thickness = 1.5
+FOVCircle.NumSides = 100
+FOVCircle.Radius = 150
+FOVCircle.Filled = false
+FOVCircle.Visible = false
+
+-- Aimbot Variables
+local AimbotEnabled = false
+local ShowFOV = false
+local FOVRadius = 150
+local Smoothness = 0.2
+local TargetPart = "Head"
+
+-- Tab 1: الرئيسية
 local MainTab = Window:CreateTab("الرئيسية ⚡", 4483362458)
 
 MainTab:CreateSlider({
@@ -48,6 +64,19 @@ MainTab:CreateSlider({
    end,
 })
 
+local FlySpeed = 50
+MainTab:CreateSlider({
+   Name = "سرعة الطيران (Fly Speed)",
+   Range = {10, 300},
+   Increment = 5,
+   Suffix = "Fly Speed",
+   CurrentValue = 50,
+   Flag = "FlySpeedSlider",
+   Callback = function(Value)
+      FlySpeed = Value
+   end,
+})
+
 local NoclipEnabled = false
 MainTab:CreateToggle({
    Name = "اختراق الجدران (Noclip)",
@@ -67,7 +96,6 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 local Flying = false
-local FlySpeed = 50
 local flyConnection
 
 MainTab:CreateToggle({
@@ -116,12 +144,11 @@ MainTab:CreateToggle({
    end,
 })
 
--- Tab 2: القتال والـ ESP
+-- Tab 2: القتال
 local CombatTab = Window:CreateTab("القتال 🎯", 4483362458)
 
-local AimbotEnabled = false
 CombatTab:CreateToggle({
-   Name = "Aimbot (اضغط E أو زر الماوس الأيمن)",
+   Name = "تفعيل Aimbot (زر E أو الماوس الأيمن)",
    CurrentValue = false,
    Flag = "AimbotToggle",
    Callback = function(Value)
@@ -129,6 +156,61 @@ CombatTab:CreateToggle({
    end,
 })
 
+CombatTab:CreateToggle({
+   Name = "إظهار دائرة FOV",
+   CurrentValue = false,
+   Flag = "FOVToggle",
+   Callback = function(Value)
+      ShowFOV = Value
+      FOVCircle.Visible = Value
+   end,
+})
+
+CombatTab:CreateSlider({
+   Name = "حجم دائرة الـ FOV",
+   Range = {50, 500},
+   Increment = 10,
+   Suffix = "px",
+   CurrentValue = 150,
+   Flag = "FOVSlider",
+   Callback = function(Value)
+      FOVRadius = Value
+      FOVCircle.Radius = Value
+   end,
+})
+
+CombatTab:CreateSlider({
+   Name = "نعومة التنشين (Smoothness)",
+   Range = {1, 10},
+   Increment = 1,
+   Suffix = "Smooth",
+   CurrentValue = 2,
+   Flag = "SmoothSlider",
+   Callback = function(Value)
+      Smoothness = Value / 10
+   end,
+})
+
+CombatTab:CreateDropdown({
+   Name = "مكان التنشين (Target Part)",
+   Options = {"Head", "HumanoidRootPart"},
+   CurrentOption = {"Head"},
+   MultipleOptions = false,
+   Flag = "PartDropdown",
+   Callback = function(Option)
+      TargetPart = Option[1]
+   end,
+})
+
+-- Update FOV Circle Position
+game:GetService("RunService").RenderStepped:Connect(function()
+    local UserInputService = game:GetService("UserInputService")
+    local mousePos = UserInputService:GetMouseLocation()
+    FOVCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
+    FOVCircle.Visible = ShowFOV
+end)
+
+-- Aimbot Loop
 game:GetService("RunService").RenderStepped:Connect(function()
     if AimbotEnabled then
         local UserInputService = game:GetService("UserInputService")
@@ -136,12 +218,12 @@ game:GetService("RunService").RenderStepped:Connect(function()
             local LocalPlayer = game.Players.LocalPlayer
             local Camera = workspace.CurrentCamera
             local Closest = nil
-            local Dist = 300
+            local Dist = FOVRadius
             local MousePos = UserInputService:GetMouseLocation()
 
             for _, p in pairs(game.Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-                    local part = p.Character.Head
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(TargetPart) and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                    local part = p.Character[TargetPart]
                     local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
                     if onScreen then
                         local d = (Vector2.new(pos.X, pos.Y) - MousePos).Magnitude
@@ -153,13 +235,16 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 end
             end
 
-            if Closest and Closest.Character and Closest.Character:FindFirstChild("Head") then
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Closest.Character.Head.Position)
+            if Closest and Closest.Character and Closest.Character:FindFirstChild(TargetPart) then
+                local targetPos = Closest.Character[TargetPart].Position
+                local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, Smoothness)
             end
         end
     end
 end)
 
+-- ESP
 local ESPEnabled = false
 local Highlights = {}
 CombatTab:CreateToggle({
