@@ -1,4 +1,4 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLTD/Rayfield/main/source'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "حمدان المنصوري | زايد المزروعي",
