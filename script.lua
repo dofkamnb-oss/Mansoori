@@ -1,9 +1,9 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "حمدان المنصوري | Keyboard Escape Hub 👑",
+   Name = "حمدان المنصوري | Keyboard Escape Pro 👑",
    Icon = 0,
-   LoadingTitle = "Mansoori Speed Engine",
+   LoadingTitle = "Keyboard Escape Engine",
    LoadingSubtitle = "by Mansoori",
    Theme = "Default",
    DisableRayfieldPrompts = false,
@@ -17,86 +17,82 @@ local Window = Rayfield:CreateWindow({
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
 
 -- Variables
-local AutoFarmSpeed = false
-local AutoRebirth = false
-local WalkSpeedValue = 500
+local AutoSpeed = false
+local InfiniteSpeedValue = 10000
+local AutoWinEnabled = false
 
--- ==================== TAB 1: الزراعة والسرعة (Auto Farm) ====================
-local FarmTab = Window:CreateTab("السرعة والتجميع ⚡", 4483362458)
+-- ==================== TAB 1: الفوز والسرعة (Auto Farm) ====================
+local MainTab = Window:CreateTab("السرعة الفورية ⚡", 4483362458)
 
-FarmTab:CreateToggle({
-   Name = "تفعيل زيادة السرعة التلقائية (Auto Speed)",
+MainTab:CreateToggle({
+   Name = "تفعيل السرعة اللانهائية (Infinite Speed)",
    CurrentValue = false,
-   Flag = "KB_AutoSpeed",
+   Flag = "KB_InfSpeed",
    Callback = function(Value)
-      AutoFarmSpeed = Value
+      AutoSpeed = Value
    end,
 })
 
-FarmTab:CreateSlider({
-   Name = "قوة السرعة اليدوية (WalkSpeed)",
-   Range = {16, 5000},
-   Increment = 50,
+MainTab:CreateSlider({
+   Name = "قوة السرعة الخارقة",
+   Range = {100, 50000},
+   Increment = 500,
    Suffix = "Speed",
-   CurrentValue = 100,
-   Flag = "KB_CustomSpeed",
+   CurrentValue = 5000,
+   Flag = "KB_SpdVal",
    Callback = function(Value)
-      WalkSpeedValue = Value
-      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
-      end
+      InfiniteSpeedValue = Value
    end,
 })
 
-FarmTab:CreateToggle({
-   Name = "القفز اللانهائي (Infinite Jump)",
+MainTab:CreateToggle({
+   Name = "القفز اللانهائي (Inf Jump)",
    CurrentValue = false,
-   Flag = "KB_InfJump",
+   Flag = "KB_Jump",
    Callback = function(Value)
       _G.InfJump = Value
    end,
 })
 
--- ==================== TAB 2: العالم والمساعدة (World) ====================
-local WorldTab = Window:CreateTab("المساعدة والعالم 🌐", 4483362458)
+-- ==================== TAB 2: التليبرورت ونهاية الماب (Teleports) ====================
+local TeleportTab = Window:CreateTab("تخطّي المراحل 🏁", 4483362458)
 
-WorldTab:CreateToggle({
-   Name = "إضاءة كاملة وإزالة الظلام (Fullbright)",
-   CurrentValue = false,
-   Flag = "KB_Fullbright",
-   Callback = function(Value)
-      if Value then
-          game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
-          game:GetService("Lighting").Brightness = 2
-          game:GetService("Lighting").GlobalShadows = false
-      else
-          game:GetService("Lighting").Ambient = Color3.fromRGB(128, 128, 128)
-          game:GetService("Lighting").Brightness = 1
-          game:GetService("Lighting").GlobalShadows = true
-      end
+TeleportTab:CreateButton({
+   Name = "الانتقال إلى نهاية المرحلة الحالية (Teleport to End)",
+   Callback = function()
+      -- محاولة البحث عن نهاية الماب أو البوابات ونقل اللاعب لها
+      pcall(function()
+         for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name:lower():find("end") or obj.Name:lower():find("finish") or obj.Name:lower():find("win") then
+               if obj:IsA("BasePart") then
+                  LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame + Vector3.new(0, 5, 0)
+                  break
+               end
+            end
+         end
+      end)
    end,
 })
 
-WorldTab:CreateButton({
-   Name = "إغلاق السكربت (Unload)",
-   Callback = function()
-      Rayfield:Destroy()
+TeleportTab:CreateToggle({
+   Name = "تثبيت السرعة والتخطي التلقائي",
+   CurrentValue = false,
+   Flag = "AutoWin",
+   Callback = function(Value)
+      AutoWinEnabled = Value
    end,
 })
 
 -- ==================== LOOPS ====================
 
 RunService.RenderStepped:Connect(function()
-    -- Auto Speed Loop
-    if AutoFarmSpeed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = WalkSpeedValue
+    if AutoSpeed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = InfiniteSpeedValue
     end
 end)
 
--- Inf Jump Logic
 game:GetService("UserInputService").JumpRequest:Connect(function()
     if _G.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
