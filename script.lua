@@ -1,16 +1,16 @@
--- // Mansoori Hub | Safe Edition (No Drawing Errors)
+-- // Mansoori Hub | Ultimate Edition v5
 -- // Developer: alain20103
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Mansoori Hub | Safe Edition",
+   Name = "Mansoori Hub | Ultimate Edition",
    LoadingTitle = "جاري تحميل Mansoori Hub...",
    LoadingSubtitle = "by alain20103",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = "MansooriConfigs",
-      FileName = "SafeConfig"
+      FileName = "UltimateConfig"
    },
    KeySystem = false,
 })
@@ -21,7 +21,7 @@ local Camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- // الرئيسية والمعلومات
+-- // 1. الرئيسية والمعلومات ووقت الـ AFK
 local InfoTab = Window:CreateTab("الرئيسية والمعلومات", 4483345998)
 
 local GlobalStartTime = tick()
@@ -77,7 +77,7 @@ task.spawn(function()
     end
 end)
 
--- // مطور السكربت
+-- // 2. قسم مطور السكربت
 local DevTab = Window:CreateTab("مطور السكربت", 7072725342)
 
 DevTab:CreateParagraph({
@@ -95,9 +95,63 @@ DevTab:CreateButton({
    end,
 })
 
--- // القتال والأيم بوت
+-- // 3. قسم القتال والأيم بوت ودائرة الـ FOV المتقدمة
 local CombatTab = Window:CreateTab("القتال والأيم بوت", 7072718336)
+
 local AimbotEnabled = false
+local FOVEnabled = false
+local FOVRadius = 100
+local FOVColor = Color3.fromRGB(255, 255, 255)
+
+local success, FOVCircle = pcall(function()
+    local circle = Drawing.new("Circle")
+    circle.Visible = false
+    circle.Radius = FOVRadius
+    circle.Color = FOVColor
+    circle.Thickness = 2
+    circle.Filled = false
+    circle.Transparency = 1
+    return circle
+end)
+
+RunService.RenderStepped:Connect(function()
+    if success and FOVCircle then
+        FOVCircle.Position = UserInputService:GetMouseLocation()
+        if FOVEnabled and AimbotEnabled then
+            FOVCircle.Visible = true
+            FOVCircle.Radius = FOVRadius
+            FOVCircle.Color = FOVColor
+        else
+            FOVCircle.Visible = false
+        end
+    end
+end)
+
+CombatTab:CreateToggle({
+   Name = "تفعيل دائرة الـ FOV",
+   CurrentValue = false,
+   Callback = function(Value)
+      FOVEnabled = Value
+   end,
+})
+
+CombatTab:CreateSlider({
+   Name = "حجم دائرة الـ FOV",
+   Range = {50, 400},
+   Increment = 5,
+   CurrentValue = 100,
+   Callback = function(Value)
+      FOVRadius = Value
+   end,
+})
+
+CombatTab:CreateColorPicker({
+   Name = "لون دائرة الـ FOV",
+   Color = Color3.fromRGB(255, 255, 255),
+   Callback = function(Value)
+      FOVColor = Value
+   end,
+})
 
 CombatTab:CreateToggle({
    Name = "تفعيل الإيم بوت (كليك يمين)",
@@ -112,7 +166,7 @@ local TargetPlayer = nil
 
 local function GetClosestToCursor()
     local target = nil
-    local shortestDist = 200
+    local shortestDist = FOVRadius
     local mousePos = UserInputService:GetMouseLocation()
     
     for _, p in pairs(Players:GetPlayers()) do
@@ -172,11 +226,11 @@ CombatTab:CreateSlider({
    end,
 })
 
--- // الرؤية والـ ESP
+-- // 4. قسم الرؤية والـ ESP
 local VisualsTab = Window:CreateTab("الرؤية والـ ESP", 7072727157)
 
 VisualsTab:CreateToggle({
-   Name = "تفعيل ESP (Highlight)",
+   Name = "تفعيل ESP المطور (Highlight)",
    CurrentValue = false,
    Callback = function(Value)
       _G.EnhancedESP = Value
@@ -205,7 +259,7 @@ VisualsTab:CreateToggle({
    end,
 })
 
--- // الحركة
+-- // 5. قسم اللاعب والحركة
 local PlayerTab = Window:CreateTab("اللاعب والحركة", 7072719002)
 
 PlayerTab:CreateSlider({
@@ -327,7 +381,7 @@ PlayerTab:CreateButton({
    end,
 })
 
--- // الإعدادات والتحكم
+-- // 6. قسم الإعدادات (زر إخفاء وإظهار المنيو تماماً)
 local SettingsTab = Window:CreateTab("الإعدادات والتحكم", 7072727157)
 
 SettingsTab:CreateButton({
